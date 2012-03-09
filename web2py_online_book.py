@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+'''
+Create web2py online book file by retreiving contents from its site
+'''
+
 import urllib
 from HTMLParser import HTMLParser
 
