@@ -1,0 +1,5 @@
+xscripts contains some useful scripts for developers
+
+web2py_online_book.py
+This is a script for retreiving contents of web2py online book from its site, and creating a Vim help file like documentation.
+With this document, the developer could search whatever he needs easily via Vim commands.
