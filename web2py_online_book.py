@@ -23,6 +23,50 @@ class WebArticle(object):
         self.images_.append(url)
 
 class WebDocParser(HTMLParser, object):
+    #
+    class CodeTable(object):
+        def __init__(self):
+            self.rows = []
+
+        def create_row(self):
+            self.rows.append([])
+
+        def create_column(self):
+            row = self.rows[-1]
+            row.append([])
+
+        def __call__(self, data):
+            row = self.rows[-1]
+            if data != '\n':
+                if len(row[-1]) == 0:
+                    row[-1].append('')
+                row[-1][-1] += data
+            else:
+                row[-1].append('')
+
+        def content(self):
+            c = [] 
+            for row in self.rows:
+                columns = len(row)
+                lines = len(row[0])
+                # Check if all columns have the same number of lines
+                for column in range(columns):
+                    if len(row[column]) < lines:
+                        rest = lines - len(row[column])
+                        row[column].extend([''] * rest)
+                b = []
+                for line in range(lines):
+                    l = []
+                    for column in range(columns):
+                        # In case if a cell without content
+                        if len(row[column]) == 0:
+                            l.append('')
+                        else:
+                            l.append(row[column][line])
+                    b.append(' '.join(l))
+                c.append('\n'.join(b))
+            return '\n'.join(c)
+    #
     def __init__(self, url):
         super(WebDocParser, self).__init__()
         self.article_ = WebArticle()
@@ -49,17 +93,28 @@ class WebDocParser(HTMLParser, object):
             self.levels_ = self.levels_ + 1
             if tag == 'p':
                 self.article_.append("\n")
+            elif tag == 'table':
+                self.consumer_ = WebDocParser.CodeTable()
+            elif tag == 'tr':
+                self.consumer_.create_row()
+            elif tag == 'td':
+                self.consumer_.create_column()
 
     def handle_endtag(self, tag):
         if self.levels_ > 0:
             self.levels_ = self.levels_ - 1
+            if tag == 'table':
+                self.article_.append('\n')
+                self.article_.append(self.consumer_.content())
+                self.article_.append('\n')
+                self.consumer_ = self.article_.append
         elif self.levels_ == 0:
             self.consumer_ = None
 
     def handle_startendtag(self, tag, attrs):
         if self.levels_ > 0:
             if tag == 'br':
-                self.article_.append("\n")
+                self.consumer_("\n")
             elif tag == 'img':
                 for attr, value in attrs:
                     if attr == 'src':
