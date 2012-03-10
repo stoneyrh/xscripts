@@ -10,24 +10,24 @@ from HTMLParser import HTMLParser
 
 class WebArticle(object):
     def __init__(self):
-        self.title_ = ""
-        self.content_ = ""
-        self.images_ = []
+        self.__title = ""
+        self.__content = ""
+        self.__images = []
 
     def title(self):
-        return self.title_
+        return self.__title
 
     def content(self):
-        return self.content_
+        return self.__content
 
     def set_title(self, title):
-        self.title_ = title
+        self.__title = title
 
     def append(self, content):
-        self.content_ += content
+        self.__content += content
 
     def add_image(self, url):
-        self.images_.append(url)
+        self.__images.append(url)
 
 class WebDocParser(HTMLParser, object):
     #
@@ -76,62 +76,62 @@ class WebDocParser(HTMLParser, object):
     #
     def __init__(self, url):
         super(WebDocParser, self).__init__()
-        self.article_ = WebArticle()
-        self.consumer_ = None
-        self.url_ = url
-        self.levels_ = 0
+        self.__article = WebArticle()
+        self.__consumer = None
+        self.__url = url
+        self.__levels = 0
 
     def article(self):
-        return self.article_ if self.article_.title() and self.article_.content() else None
+        return self.__article if self.__article.title() and self.__article.content() else None
 
     def handle_starttag(self, tag, attrs):
-        if self.levels_ == 0:
+        if self.__levels == 0:
             if tag == 'div':
                 for attr, value in attrs:
                     if attr == 'class' and value == 'article':
-                        self.consumer_ = self.article_.append
-                        self.levels_ = 1
+                        self.__consumer = self.__article.append
+                        self.__levels = 1
             # If the title is still emtpy, then try to get it
-            elif tag == 'a' and not self.article_.title():
+            elif tag == 'a' and not self.__article.title():
                 href, url = attrs[0]
-                if self.url_.endswith(url):
-                    self.consumer_ = self.article_.set_title
-        elif self.levels_ > 0:
-            self.levels_ = self.levels_ + 1
+                if self.__url.endswith(url):
+                    self.__consumer = self.__article.set_title
+        elif self.__levels > 0:
+            self.__levels = self.__levels + 1
             if tag == 'p':
-                self.article_.append("\n")
+                self.__article.append("\n")
             elif tag == 'table':
-                self.consumer_ = WebDocParser.CodeTable()
+                self.__consumer = WebDocParser.CodeTable()
             elif tag == 'tr':
-                self.consumer_.create_row()
+                self.__consumer.create_row()
             elif tag == 'td':
-                self.consumer_.create_column()
+                self.__consumer.create_column()
 
     def handle_endtag(self, tag):
-        if self.levels_ > 0:
-            self.levels_ = self.levels_ - 1
+        if self.__levels > 0:
+            self.__levels = self.__levels - 1
             if tag == 'table':
-                self.article_.append('\n')
-                self.article_.append(self.consumer_.content())
-                self.article_.append('\n')
-                self.consumer_ = self.article_.append
-        elif self.levels_ == 0:
-            self.consumer_ = None
+                self.__article.append('\n')
+                self.__article.append(self.__consumer.content())
+                self.__article.append('\n')
+                self.__consumer = self.__article.append
+        elif self.__levels == 0:
+            self.__consumer = None
 
     def handle_startendtag(self, tag, attrs):
-        if self.levels_ > 0:
+        if self.__levels > 0:
             if tag == 'br':
-                self.consumer_("\n")
+                self.__consumer("\n")
             elif tag == 'img':
                 for attr, value in attrs:
                     if attr == 'src':
-                        self.article_.append("\n**image** %s\n" % value)
-                        self.article_.add_image(value)
+                        self.__article.append("\n**image** %s\n" % value)
+                        self.__article.add_image(value)
                         break
 
     def handle_data(self, data):
-        if self.consumer_:
-            self.consumer_(data)
+        if self.__consumer:
+            self.__consumer(data)
 
     def handle_entityref(self, name):
         pass
