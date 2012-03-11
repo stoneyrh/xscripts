@@ -6,6 +6,7 @@ Create web2py online book file by retreiving contents from its site
 '''
 
 import urllib
+import os
 from HTMLParser import HTMLParser
 
 class WebArticle(object):
@@ -20,13 +21,16 @@ class WebArticle(object):
     def content(self):
         return self.__content
 
+    def images(self):
+        return self.__images
+
     def set_title(self, title):
         self.__title = title
 
     def append(self, content):
         self.__content += content
 
-    def add_image(self, url):
+    def append_image(self, url):
         self.__images.append(url)
 
 class WebDocParser(HTMLParser, object):
@@ -130,8 +134,10 @@ class WebDocParser(HTMLParser, object):
             elif tag == 'img':
                 for attr, value in attrs:
                     if attr == 'src':
-                        self.__article.append('\n**image** %s\n' % value)
-                        self.__article.add_image(value)
+                        if not value.startswith('http'):
+                            value = 'http://web2py.com' + value
+                        self.__article.append('<img %s>' % value)
+                        self.__article.append_image(value)
                         break
 
     def handle_data(self, data):
@@ -160,6 +166,18 @@ def article_from(url):
     parser.feed(html)
     return parser.article()
 
+def fetch_images(article):
+    images = []
+    seq = 0
+    for url in article.images():
+        print 'Fetching image from "' + url + '"...'
+        opener = urllib.urlopen(url)
+        data = opener.read()
+        name = '%s' % seq
+        seq = seq + 1
+        images.append((data, name))
+    return images
+
 def main():
     articles = []
     base = 'http://web2py.com/books/default/chapter/29/%d'
@@ -184,6 +202,17 @@ def main():
         book.write('\n')
         book.write(footline)
         book.close()
+
+        '''
+        for article in articles:
+            images = fetch_images(article)
+            if images:
+                folder = article.title().replace(' ', '')
+                if not os.path.exists(folder):
+                    os.mkdir(folder)
+                for data, name in images:
+                    print name, data
+        '''
 
 if __name__ == '__main__':
     main()
