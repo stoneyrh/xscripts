@@ -10,8 +10,8 @@ from HTMLParser import HTMLParser
 
 class WebArticle(object):
     def __init__(self):
-        self.__title = ""
-        self.__content = ""
+        self.__title = ''
+        self.__content = ''
         self.__images = []
 
     def title(self):
@@ -45,6 +45,11 @@ class WebDocParser(HTMLParser, object):
         def __call__(self, data):
             row = self.rows[-1]
             if data != '\n':
+                data = data.replace('-lt-', '<').\
+                        replace('-gt-', '>').\
+                        replace('-nbsp-', ' ').\
+                        replace('-amp-', '&').\
+                        replace('-quot-', '"')
                 if len(row[-1]) == 0:
                     row[-1].append('')
                 row[-1][-1] += data
@@ -99,7 +104,7 @@ class WebDocParser(HTMLParser, object):
         elif self.__levels > 0:
             self.__levels = self.__levels + 1
             if tag == 'p':
-                self.__article.append("\n")
+                self.__article.append('\n')
             elif tag == 'table':
                 self.__consumer = WebDocParser.CodeTable()
             elif tag == 'tr':
@@ -121,11 +126,11 @@ class WebDocParser(HTMLParser, object):
     def handle_startendtag(self, tag, attrs):
         if self.__levels > 0:
             if tag == 'br':
-                self.__consumer("\n")
+                self.__consumer('\n')
             elif tag == 'img':
                 for attr, value in attrs:
                     if attr == 'src':
-                        self.__article.append("\n**image** %s\n" % value)
+                        self.__article.append('\n**image** %s\n' % value)
                         self.__article.add_image(value)
                         break
 
@@ -142,13 +147,22 @@ class WebDocParser(HTMLParser, object):
 def article_from(url):
     opener = urllib.urlopen(url)
     html = opener.read()
+    # The parser will eliminate these special tags from the stream
+    # Then they won't be output
+    # We replace them with another special string, then later when parsed
+    # They will be replaced by real characters
+    html = html.replace('&lt;', '-lt-').\
+            replace('&gt;', '-gt-').\
+            replace('&nbsp;', '-nbsp-').\
+            replace('&amp;', '-amp-').\
+            replace('&quot;', '-quot-')
     parser = WebDocParser(url)
     parser.feed(html)
     return parser.article()
 
 def main():
     articles = []
-    base = "http://web2py.com/books/default/chapter/29/%d"
+    base = 'http://web2py.com/books/default/chapter/29/%d'
     for chapter in range(15):
         url = base % chapter
         print 'Retrieving ' + url
