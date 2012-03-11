@@ -33,6 +33,14 @@ class WebArticle(object):
     def append_image(self, url):
         self.__images.append(url)
 
+    def polish(self):
+        self.__content = self.__content.\
+                replace('-lt-', '<').\
+                replace('-gt-', '>').\
+                replace('-nbsp-', ' ').\
+                replace('-amp-', '&').\
+                replace('-quot-', '"')
+
 class WebDocParser(HTMLParser, object):
     #
     class CodeTable(object):
@@ -49,11 +57,6 @@ class WebDocParser(HTMLParser, object):
         def __call__(self, data):
             row = self.rows[-1]
             if data != '\n':
-                data = data.replace('-lt-', '<').\
-                        replace('-gt-', '>').\
-                        replace('-nbsp-', ' ').\
-                        replace('-amp-', '&').\
-                        replace('-quot-', '"')
                 if len(row[-1]) == 0:
                     row[-1].append('')
                 row[-1][-1] += data
@@ -150,6 +153,13 @@ class WebDocParser(HTMLParser, object):
     def handle_charref(self, name):
         pass
 
+    def feed(self, html):
+        super(WebDocParser, self).feed(html)
+        self.__article.polish()
+
+    def close(self):
+        super(WebDocParser, self).close()
+
 def article_from(url):
     opener = urllib.urlopen(url)
     html = opener.read()
@@ -164,6 +174,7 @@ def article_from(url):
             replace('&quot;', '-quot-')
     parser = WebDocParser(url)
     parser.feed(html)
+    parser.close()
     return parser.article()
 
 def fetch_images(article):
