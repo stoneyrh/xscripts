@@ -174,7 +174,6 @@ def article_from(url):
             replace('&quot;', '-quot-')
     parser = WebDocParser(url)
     parser.feed(html)
-    parser.close()
     return parser.article()
 
 def fetch_images(article):
