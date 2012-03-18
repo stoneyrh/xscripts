@@ -110,7 +110,7 @@ class WebDocParser(HTMLParser, object):
                     self.__consumer = self.__article.set_title
         elif self.__levels > 0:
             self.__levels = self.__levels + 1
-            if tag == 'p':
+            if tag == 'p' or tag == 'ul' or tag == 'ol':
                 self.__article.append('\n')
             elif tag == 'table':
                 self.__consumer = WebDocParser.CodeTable()
@@ -127,6 +127,8 @@ class WebDocParser(HTMLParser, object):
                 self.__article.append(self.__consumer.content())
                 self.__article.append('\n')
                 self.__consumer = self.__article.append
+            elif tag == 'li':
+                self.__article.append('\n')
         elif self.__levels == 0:
             self.__consumer = None
 
