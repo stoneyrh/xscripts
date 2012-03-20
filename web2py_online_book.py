@@ -112,6 +112,12 @@ class WebDocParser(HTMLParser, object):
             self.__levels = self.__levels + 1
             if tag in ('p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4'):
                 self.__article.append('\n')
+            elif tag == 'div':
+                for attr, value in attrs:
+                    # This is for index only, we don't need it
+                    if attr == 'class' and value == 'inxx':
+                        self.__consumer = None
+                        self.__last_consumer = self.__consumer
             elif tag == 'table':
                 self.__consumer = WebDocParser.CodeTable()
             elif tag == 'tr':
@@ -129,6 +135,10 @@ class WebDocParser(HTMLParser, object):
                 self.__consumer = self.__article.append
             elif tag == 'li':
                 self.__article.append('\n')
+            elif tag == 'div' and not self.__consumer:
+                if hasattr(self, '__last_consumer') and self.__last_consumer:
+                    self.__consumer = self.__last_consumer
+                    del self.__last_consumer
         elif self.__levels == 0:
             self.__consumer = None
 
