@@ -110,7 +110,7 @@ class WebDocParser(HTMLParser, object):
                     self.__consumer = self.__article.set_title
         elif self.__levels > 0:
             self.__levels = self.__levels + 1
-            if tag in ('p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4'):
+            if tag in ('p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'code'):
                 self.__article.append('\n')
             elif tag == 'div':
                 for attr, value in attrs:
@@ -133,7 +133,7 @@ class WebDocParser(HTMLParser, object):
                 self.__article.append(self.__consumer.content())
                 self.__article.append('\n')
                 self.__consumer = self.__article.append
-            elif tag == 'li':
+            elif tag in ('li'):
                 self.__article.append('\n')
             elif tag == 'div' and not self.__consumer:
                 if hasattr(self, '__last_consumer') and self.__last_consumer:
