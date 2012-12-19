@@ -107,10 +107,18 @@ def vim_home():
         return os.path.join(program_files(), 'Vim')
     return output_of_cmd('which vim')
 
-def vim_config_home():
+def vim_binary_home():
     if is_windows():
         return os.path.join(vim_home(), 'vim73')
     return vim_home()
+
+def vimfiles_home():
+    if is_windows():
+        return os.path.join(vim_home(), 'vimfiles')
+    return vim_home()
+
+def vim_plugin_home():
+    return os.path.join(vim_binary_home(), 'plugin')
 
 def program_files():
     return os.environ['PROGRAMFILES']
@@ -152,15 +160,17 @@ def add_to_environ(dirname):
 
 def configure_ctags(filename, **kwargs):
     print 'Installing %s...' % filename
-    if unzip(filename, program_files()):
+    args = {'to':kwargs['dirname'] if kwargs.has_key('dirname') else program_files()}
+    if unzip(filename, **args):
         if is_windows():
-            return add_to_environ(ctags_basedir(program_files()))
+            return add_to_environ(ctags_basedir(args['to']))
         return True
     return False
 
 def configure_zip(filename, **kwargs):
     print 'Installing %s...' % filename
-    return unzip(filename, vim_config_home())
+    args = {'to':kwargs['dirname'] if kwargs.has_key('dirname') else vimfiles_home()}
+    return unzip(filename, **args)
 
 def configure_cscope(filename, **kwargs):
     print 'Installing %s...' % filename
@@ -174,7 +184,8 @@ def configure_cscope(filename, **kwargs):
 def configure_script(filename, **kwargs):
     try:
         print 'Installing %s...' % filename
-        shutil.copy(filename, vim_config_home())
+        destination = kwargs['dirname'] if kwargs.has_key('dirname') else vim_plugin_home()
+        shutil.copy(filename, destination)
         return True
     except Exception, e:
         print e
@@ -198,14 +209,14 @@ def configure_vimrc():
 
 items_info = [
         ('ctags.zip', 'http://prdownloads.sourceforge.net/ctags/ctags58.zip', configure_ctags),
-        ('tag-list.zip', 'http://www.vim.org/scripts/download_script.php?src_id=7701', configure_zip),
-        ('cscope.vim', 'http://cscope.sourceforge.net/cscope_maps.vim', configure_script),
+        ('tag-list.zip', 'http://www.vim.org/scripts/download_script.php?src_id=7701', configure_zip, {'dirname':vimfiles_home()}),
+        ('cscope_maps.vim', 'http://cscope.sourceforge.net/cscope_maps.vim', configure_script),
         #('cscope.tar.gz', 'http://downloads.sourceforge.net/project/cscope/cscope/15.8a/cscope-15.8a.tar.gz', configure_cscope),
         ('cscope.zip', 'http://downloads.sourceforge.net/project/mslk/Cscope/cscope-15.7/cscope-15.7.zip', configure_cscope),
-        ('omni-cpp-complete.zip', 'http://www.vim.org/scripts/download_script.php?src_id=7722', configure_zip),
-        ('super-tab.vim', 'http://www.vim.org/scripts/download_script.php?src_id=18075', configure_script),
-        ('win-manager.zip', 'http://www.vim.org/scripts/download_script.php?src_id=754', configure_zip),
-        ('nerd-tree.zip', 'http://www.vim.org/scripts/download_script.php?src_id=17123', configure_zip),
+        ('omni-cpp-complete.zip', 'http://www.vim.org/scripts/download_script.php?src_id=7722', configure_zip, {'dirname':vimfiles_home()}),
+        ('super-tab.vmb', 'http://www.vim.org/scripts/download_script.php?src_id=18075', configure_script, {'dirname':vim_binary_home()}),
+        ('win-manager.zip', 'http://www.vim.org/scripts/download_script.php?src_id=754', configure_zip, {'dirname':vimfiles_home()}),
+        ('nerd-tree.zip', 'http://www.vim.org/scripts/download_script.php?src_id=17123', configure_zip, {'dirname':vimfiles_home()}),
         ('mini-buf-explorer.vim', 'http://www.vim.org/scripts/download_script.php?src_id=3640', configure_script)
         ]
 
