@@ -211,6 +211,9 @@ items_info = [
 
 def main():
     vimrc_file = detect_vimrc()
+    if not os.path.exists(vimrc_file):
+        print 'No Vim installation detected.'
+        return
     for info in items_info:
         name, url, configure, args = info[0], info[1], info[2], info[3] if len(info) >= 4 else {}
         filename = local_file_of(name)
