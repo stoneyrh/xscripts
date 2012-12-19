@@ -13,6 +13,7 @@ import urllib
 import zipfile
 import subprocess
 import shutil
+import tarfile
 
 vimrc_lines = '''map <C-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
 let Tlist_Show_One_File=1
@@ -161,6 +162,15 @@ def configure_zip(filename, **kwargs):
     print 'Installing %s...' % filename
     return unzip(filename, vim_config_home())
 
+def configure_cscope(filename, **kwargs):
+    print 'Installing %s...' % filename
+    cscope_basedir = os.path.join(program_files(), 'cscope')
+    if unzip(filename, cscope_basedir):
+        if is_windows():
+            return add_to_environ(cscope_basedir)
+        return True
+    return False
+
 def configure_script(filename, **kwargs):
     try:
         print 'Installing %s...' % filename
@@ -176,19 +186,22 @@ def configure_vimrc():
         file = open(vimrc_file, 'rt')
         content = file.read()
         file.close()
-        content = '\n'.join([content, vimrc_lines])
-        file = open(vimrc_file, 'wt')
-        file.write(content)
-        file.close()
+        if content.find(vimrc_lines) < 0:
+            content = '\n'.join([content, vimrc_lines])
+            file = open(vimrc_file, 'wt')
+            file.write(content)
+            file.close()
         return True
     except Exception, e:
         print e
     return False
 
-items_to_download = [
+items_info = [
         ('ctags.zip', 'http://prdownloads.sourceforge.net/ctags/ctags58.zip', configure_ctags),
         ('tag-list.zip', 'http://www.vim.org/scripts/download_script.php?src_id=7701', configure_zip),
         ('cscope.vim', 'http://cscope.sourceforge.net/cscope_maps.vim', configure_script),
+        #('cscope.tar.gz', 'http://downloads.sourceforge.net/project/cscope/cscope/15.8a/cscope-15.8a.tar.gz', configure_cscope),
+        ('cscope.zip', 'http://downloads.sourceforge.net/project/mslk/Cscope/cscope-15.7/cscope-15.7.zip', configure_cscope),
         ('omni-cpp-complete.zip', 'http://www.vim.org/scripts/download_script.php?src_id=7722', configure_zip),
         ('super-tab.vim', 'http://www.vim.org/scripts/download_script.php?src_id=18075', configure_script),
         ('win-manager.zip', 'http://www.vim.org/scripts/download_script.php?src_id=754', configure_zip),
@@ -198,16 +211,17 @@ items_to_download = [
 
 def main():
     vimrc_file = detect_vimrc()
-    for name, url, configure in items_to_download:
+    for info in items_info:
+        name, url, configure, args = info[0], info[1], info[2], info[3] if len(info) >= 4 else {}
         filename = local_file_of(name)
         if not has_downloaded(filename):
             print 'Downloading ' + name + ' to ' + filename
             if not download(filename, url):
                 print 'Failed to download ' + name
-                break
-        if not configure(filename = filename):
+                return
+        if not configure(filename = filename, **args):
             print 'Failed to configure %s.' % filename
-            break
+            return
     print 'Configuring startup settings...'
     if not configure_vimrc():
         print 'Failed to configure %s.' % vimrc_file
